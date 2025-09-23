@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
@@ -14,6 +15,9 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
+  
+  private readonly logger = new Logger(UsersService.name);
+  
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -29,7 +33,7 @@ export class UsersService implements OnModuleInit {
         name: 'John Doe',
         password: 'password123',
       };
-      console.log('Criando utilizador padrão...');
+      this.logger.log('Banco de dados vazio. Criando usuário padrão...');
       await this.create(defaultUser);
     }
   }
@@ -48,6 +52,9 @@ export class UsersService implements OnModuleInit {
 
     try {
       const savedUser = await this.usersRepository.save(user);
+
+      this.logger.log(`Novo usuário criado: ${savedUser.email} (ID: ${savedUser.id})`);
+
       const { password, ...result } = savedUser;
       return result;
     } catch (error) {
@@ -55,6 +62,7 @@ export class UsersService implements OnModuleInit {
       if (error.code === 'SQLITE_CONSTRAINT') {
         throw new ConflictException('Este e-mail já está em uso.');
       } else {
+        this.logger.error('Erro inesperado ao criar usuário', error.stack);
         throw new InternalServerErrorException();
       }
     }

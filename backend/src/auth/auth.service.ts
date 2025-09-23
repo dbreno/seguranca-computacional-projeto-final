@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -11,6 +12,9 @@ import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
+  
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -23,13 +27,17 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
+      this.logger.warn(`Tentativa de login falhou para o email: ${email} (usuário não encontrado)`);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
     if (!isMatch) {
+      this.logger.warn(`Tentativa de login falhou para o email: ${email} (senha incorreta)`);
       throw new UnauthorizedException('Credenciais inválidas');
     }
+
+    this.logger.log(`Usuário ${email} logado com sucesso.`);
 
     const tokens = await this.getTokens(user.id, user.email);
     await this.setCurrentRefreshToken(tokens.refreshToken, user.id);
@@ -72,6 +80,7 @@ export class AuthService {
   async refreshTokens(userId: number, refreshToken: string) {
     const user = await this.usersService.findOne(userId);
     if (!user || !user.currentHashedRefreshToken) {
+      this.logger.warn(`Tentativa de refresh de token falhou para o usuário ID: ${userId} (sem refresh token)`);
       throw new ForbiddenException('Acesso Negado');
     }
 
@@ -81,6 +90,7 @@ export class AuthService {
     );
 
     if (!refreshTokenMatches) {
+      this.logger.warn(`Tentativa de refresh de token falhou para o usuário ID: ${userId} (token inválido)`);
       throw new ForbiddenException('Acesso Negado');
     }
 
