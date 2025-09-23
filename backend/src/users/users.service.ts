@@ -20,7 +20,6 @@ export class UsersService implements OnModuleInit {
     });
     if (!user) {
       const defaultUser: CreateUserDto = {
-        id: 1, // Adicionado para consistência com o DTO
         email: 'user@example.com',
         name: 'John Doe',
         password: 'password123',

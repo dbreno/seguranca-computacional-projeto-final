@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  id: number;
+  // A propriedade 'id' foi removida daqui.
 
   @ApiProperty({ example: 'user@example.com' })
   email: string;
