@@ -1,21 +1,28 @@
 import { useNavigate } from 'react-router-dom';
+import { Button, Container, Paper, Title, Text } from '@mantine/core';
 
 export function DashboardPage() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Limpar os tokens guardados
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    // Redirecionar para a página de login
     navigate('/login');
   };
 
   return (
-    <div>
-      <h2>Dashboard (Página Protegida)</h2>
-      <p>Bem-vindo! Você está autenticado.</p>
-      <button onClick={handleLogout}>Logout</button>
-    </div>
+    <Container size={420} my={40}>
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <Title order={2} ta="center">
+          Dashboard
+        </Title>
+        <Text ta="center" mt="md">
+          Bem-vindo! Você está autenticado.
+        </Text>
+        <Button onClick={handleLogout} fullWidth mt="xl">
+          Logout
+        </Button>
+      </Paper>
+    </Container>
   );
 }

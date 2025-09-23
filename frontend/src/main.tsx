@@ -2,12 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { BrowserRouter } from 'react-router-dom';
-import './index.css'; // Importar o nosso novo CSS
+
+// Import Mantine styles
+import '@mantine/core/styles.css';
+import { MantineProvider } from '@mantine/core';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <MantineProvider defaultColorScheme="dark">
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </MantineProvider>
   </React.StrictMode>,
 );

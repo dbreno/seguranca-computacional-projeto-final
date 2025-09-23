@@ -53,7 +53,7 @@ export class UsersService implements OnModuleInit {
     } catch (error) {
       // Verifica se o erro é uma violação de constraint única (código 23505 para Postgres, SQLITE_CONSTRAINT para SQLite)
       if (error.code === 'SQLITE_CONSTRAINT') {
-        throw new ConflictException('Este email já está a ser utilizado.');
+        throw new ConflictException('Este email já está sendo utilizado.');
       } else {
         throw new InternalServerErrorException();
       }
