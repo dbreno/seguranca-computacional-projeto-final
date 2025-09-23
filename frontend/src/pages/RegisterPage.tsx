@@ -18,7 +18,16 @@ export function RegisterPage() {
       await axios.post('http://localhost:3000/users', { name, email, password });
       setSuccess('Utilizador registado com sucesso! Pode agora fazer o login.');
     } catch (err) {
-      setError('Falha ao registar. O email já pode existir.');
+      if (axios.isAxiosError(err) && err.response) {
+        // Agora verificamos o status do erro
+        if (err.response.status === 409) {
+          setError(err.response.data.message); // Usa a mensagem vinda do backend
+        } else {
+          setError('Ocorreu um erro inesperado ao tentar registar.');
+        }
+      } else {
+        setError('Erro de conexão. O servidor backend está a correr?');
+      }
     }
   };
 

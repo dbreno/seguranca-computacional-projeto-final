@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -13,7 +19,6 @@ export class UsersService implements OnModuleInit {
     private usersRepository: Repository<User>,
   ) {}
 
-  // Cria um utilizador inicial se a base de dados estiver vazia
   async onModuleInit() {
     const user = await this.usersRepository.findOneBy({
       email: 'user@example.com',
@@ -41,10 +46,18 @@ export class UsersService implements OnModuleInit {
       password: hashedPassword,
     });
 
-    const savedUser = await this.usersRepository.save(user);
-
-    const { password, ...result } = savedUser;
-    return result;
+    try {
+      const savedUser = await this.usersRepository.save(user);
+      const { password, ...result } = savedUser;
+      return result;
+    } catch (error) {
+      // Verifica se o erro é uma violação de constraint única (código 23505 para Postgres, SQLITE_CONSTRAINT para SQLite)
+      if (error.code === 'SQLITE_CONSTRAINT') {
+        throw new ConflictException('Este email já está a ser utilizado.');
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
   }
 
   async findAll(): Promise<Omit<User, 'password'>[]> {
@@ -64,7 +77,6 @@ export class UsersService implements OnModuleInit {
 
   async findByEmail(email: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOneBy({ email });
-    // Se o utilizador for nulo (não encontrado), retorna undefined para corresponder à assinatura do método.
     return user || undefined;
   }
 
@@ -72,18 +84,14 @@ export class UsersService implements OnModuleInit {
     id: number,
     updateUserDto: UpdateUserDto,
   ): Promise<Omit<User, 'password'>> {
-    // 1. Carregar a entidade existente
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // 2. Fundir as alterações do DTO para a entidade carregada
     Object.assign(user, updateUserDto);
 
-    // 3. Salvar a entidade atualizada de volta na base de dados
     const updatedUser = await this.usersRepository.save(user);
-
     const { password, ...result } = updatedUser;
     return result;
   }
