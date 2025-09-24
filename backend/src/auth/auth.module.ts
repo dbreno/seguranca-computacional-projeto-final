@@ -14,6 +14,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 // Importa o módulo de configuração para acessar variáveis de ambiente
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 
 @Module({
   // Define os módulos que serão importados por este módulo
@@ -34,7 +35,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   // Define os controladores deste módulo
   controllers: [AuthController], // Controlador responsável pelas rotas de autenticação
   // Define os provedores (serviços) deste módulo
-  providers: [AuthService, JwtStrategy], // Serviço de autenticação e estratégia JWT
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy], // Serviço de autenticação e estratégia JWT
 })
 // Exporta a classe do módulo de autenticação
 export class AuthModule {}

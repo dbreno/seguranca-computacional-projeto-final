@@ -1,6 +1,8 @@
+// src/pages/RegisterPage.tsx
+
 import { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   TextInput,
   PasswordInput,
@@ -10,61 +12,85 @@ import {
   Title,
   Text,
   Stack,
-  Alert,
+  // O Alert não é mais necessário
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
+// O IconAlertCircle não é mais necessário
+import { notifications } from '@mantine/notifications';
 
-// Função que define a página de registro
 export function RegisterPage() {
-  // Estados para armazenar os valores dos campos e mensagens de feedback
-  const [name, setName] = useState(''); // Nome do usuário
-  const [email, setEmail] = useState(''); // Email do usuário
-  const [password, setPassword] = useState(''); // Senha do usuário
-  const [error, setError] = useState(''); // Mensagem de erro
-  const [success, setSuccess] = useState(''); // Mensagem de sucesso
-  const [loading, setLoading] = useState(false); // Estado de carregamento
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  // O estado de erro não é mais necessário para exibir o alerta
+  // const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Função para lidar com o envio do formulário
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault(); // Previne o comportamento padrão do formulário
-    setError(''); // Limpa a mensagem de erro
-    setSuccess(''); // Limpa a mensagem de sucesso
-    setLoading(true); // Define o estado de carregamento como verdadeiro
+    event.preventDefault();
+    // setError(''); // Não é mais necessário
+    setLoading(true);
 
     try {
-      // Faz uma requisição POST para registrar o usuário
+      // 1. Tenta registrar o usuário
       await axios.post('http://localhost:3000/users', { name, email, password });
-      setSuccess('Usuário registrado com sucesso! Você já pode fazer o login.'); // Define a mensagem de sucesso
+
+      // 2. Se o registro for bem-sucedido, tenta fazer o login
+      const loginResponse = await axios.post('http://localhost:3000/auth/login', {
+        email,
+        password,
+      });
+
+      // 3. Armazena os tokens no localStorage
+      localStorage.setItem('accessToken', loginResponse.data.accessToken);
+      localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
+
+      // 4. Mostra a notificação de sucesso (toast)
+      notifications.show({
+        title: 'Cadastro realizado!',
+        message: 'Seu cadastro foi realizado com sucesso.',
+        color: 'green',
+      });
+
+      // 5. Redireciona para o dashboard
+      navigate('/dashboard');
     } catch (err) {
-      // Trata erros da requisição
+      let errorMessage = 'Erro de conexão. O servidor backend está rodando?';
+      let title = 'Erro no Cadastro';
+
       if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.message || 'Falha ao registrar.'); // Define a mensagem de erro retornada pelo backend
-      } else {
-        setError('Erro de conexão. O servidor backend está rodando?'); // Define uma mensagem de erro genérica
+        if (err.response.status === 429) {
+          title = 'Limite de Tentativas Excedido';
+          errorMessage = 'Muitas tentativas falhas. Seu acesso foi bloqueado temporariamente.';
+        } else {
+          errorMessage = err.response.data.message;
+        }
       }
+
+      // Mostra a notificação de erro
+      notifications.show({
+        title,
+        message: errorMessage,
+        color: 'red',
+      });
     } finally {
-      setLoading(false); // Define o estado de carregamento como falso
+      setLoading(false);
     }
   };
 
-  // Retorna o JSX da página
   return (
     <Container size={420} my={40}>
-      {/* Título da página */}
       <Title ta="center">Criar Conta</Title>
       <Text c="dimmed" size="sm" ta="center" mt={5}>
         Já tem uma conta?{' '}
-        {/* Link para a página de login */}
         <Link to="/login" style={{ color: 'var(--mantine-color-anchor)' }}>
           Faça o login
         </Link>
       </Text>
 
-      {/* Formulário de registro */}
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
         <form onSubmit={handleSubmit}>
           <Stack>
-            {/* Campo de entrada para o nome */}
             <TextInput
               label="Nome"
               placeholder="Seu nome completo"
@@ -72,7 +98,6 @@ export function RegisterPage() {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            {/* Campo de entrada para o email */}
             <TextInput
               label="Email"
               placeholder="seu@email.com"
@@ -80,7 +105,6 @@ export function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            {/* Campo de entrada para a senha */}
             <PasswordInput
               label="Senha"
               placeholder="Sua senha"
@@ -88,29 +112,7 @@ export function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {/* Exibe mensagem de erro, se houver */}
-            {error && (
-              <Alert
-                variant="light"
-                color="red"
-                title="Erro no Registro"
-                icon={<IconAlertCircle />}
-              >
-                {error}
-              </Alert>
-            )}
-            {/* Exibe mensagem de sucesso, se houver */}
-            {success && (
-              <Alert
-                variant="light"
-                color="green"
-                title="Sucesso"
-                icon={<IconCheck />}
-              >
-                {success}
-              </Alert>
-            )}
-            {/* Botão de envio do formulário */}
+            {/* O componente Alert foi removido daqui */}
             <Button type="submit" fullWidth mt="xl" loading={loading}>
               Registrar
             </Button>

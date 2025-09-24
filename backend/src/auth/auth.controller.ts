@@ -6,13 +6,14 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtRefreshGuard } from './jwt-refresh-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Request } from 'express';
+import { JwtRefreshGuard } from './jwt-refresh-auth.guard';
 
 // Define a tag para o grupo de endpoints relacionados à autenticação
 @ApiTags('auth')
@@ -40,14 +41,11 @@ export class AuthController {
     return this.authService.logout(user.userId);
   }
 
-  // Define a operação de atualização dos tokens de autenticação
-  @UseGuards(JwtRefreshGuard) // Aplica o guard de refresh token para proteger o endpoint
-  @Post('refresh') // Define o endpoint POST em 'auth/refresh'
-  @HttpCode(HttpStatus.OK) // Define o código de status HTTP como 200 (OK)
+  @UseGuards(JwtRefreshGuard) // Protege a rota com o guard do refresh token
+  @Get('refresh') // Define o endpoint GET em 'auth/refresh'
+  @ApiOperation({ summary: 'Refresh access token' })
   refreshTokens(@Req() req: Request) {
-    // Obtém o ID do usuário e o refresh token a partir do objeto de requisição
     const user = req.user as { sub: number; refreshToken: string };
-    // Chama o método refreshTokens do serviço de autenticação, passando o ID do usuário e o refresh token
     return this.authService.refreshTokens(user.sub, user.refreshToken);
   }
 }
